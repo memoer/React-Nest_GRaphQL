@@ -1,0 +1,33 @@
+version: '3'
+services:
+  db:
+    image: postgres:13.0
+    restart: on-failure
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=nuber-db
+      - POSTGRES_USER=nuber-user
+      - POSTGRES_PASSWORD=q1w2e3
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    networks:
+      - nuber_net
+  server:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    ports:
+      - '8000:3000'
+    volumes:
+      - './src:/usr/app/src'
+    depends_on:
+      - db
+    networks:
+      - nuber_net
+    command: 'yarn start:dev'
+
+volumes:
+  database:
+networks:
+  nuber_net:

@@ -1,0 +1,7 @@
+database
+dist
+node_modules
+.gitignore
+docker-compose.yml
+dockerfile
+README.md
