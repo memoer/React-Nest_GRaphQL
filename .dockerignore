@@ -1,4 +1,5 @@
-database
+database*
+
 dist
 node_modules
 .gitignore

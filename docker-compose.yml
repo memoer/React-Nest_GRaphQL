@@ -13,6 +13,19 @@ services:
       - ./database:/var/lib/postgresql/data
     networks:
       - nuber_net
+  test-db:
+    image: postgres:13.0
+    restart: on-failure
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=nuber-db-test
+      - POSTGRES_USER=nuber-user
+      - POSTGRES_PASSWORD=q1w2e3
+    volumes:
+      - ./database-test:/var/lib/postgresql/data
+    networks:
+      - nuber_net
   server:
     build:
       context: .

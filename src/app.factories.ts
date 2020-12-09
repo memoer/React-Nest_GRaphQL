@@ -1,46 +1,43 @@
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
+import { ConfigType } from '@nestjs/config';
 import { GqlModuleAsyncOptions, GqlModuleOptions } from '@nestjs/graphql';
 import { join } from 'path';
-import { ConfigAs, databaseConfigAs, appConfigAs } from './config/registerAs';
+import { databaseConfig, appConfig } from './config/registerAs';
 
 export const typeORMFactory: TypeOrmModuleAsyncOptions['useFactory'] = (
-  configService: ConfigService,
+  _appConfig: ConfigType<typeof appConfig>,
+  _databaseConfig: ConfigType<typeof databaseConfig>,
 ) => {
-  const dbConfig = configService.get<ReturnType<typeof databaseConfigAs>>(
-    ConfigAs.DATABASE,
-  );
-  const { isDev } = configService.get<ReturnType<typeof appConfigAs>>(
-    ConfigAs.APP,
-  );
+  const dbConfig = _databaseConfig;
+  const { isProd, env } = _appConfig;
   return {
     type: 'postgres',
     port: 5432,
-    logging: isDev,
-    synchronize: isDev,
+    logging: env === 'development',
+    synchronize: !isProd,
     entities: [join(__dirname + '/**/*.entity{.ts,.js}')],
     ...dbConfig,
   };
 };
 
 export const graphQLFactory: GqlModuleAsyncOptions['useFactory'] = (
-  configService: ConfigService,
+  _appConfig: ConfigType<typeof appConfig>,
 ) => {
-  const { isDev } = configService.get<ReturnType<typeof appConfigAs>>(
-    ConfigAs.APP,
-  );
+  const { isProd } = _appConfig;
+  const context = ({ req }) => ({ user: req['user'] });
   const options: Partial<GqlModuleOptions> = {
-    context: ({ req }) => ({ req }),
-    playground: isDev,
-    introspection: isDev,
-    debug: isDev,
+    context,
+    playground: !isProd,
+    introspection: !isProd,
+    debug: !isProd,
     uploads: {
       maxFileSize: 10000000, // 10 MB
       maxFiles: 5,
     },
+    sortSchema: !isProd,
   };
-  if (isDev) {
-    options.autoSchemaFile = 'schema.graphql';
+  if (!isProd) {
+    options.autoSchemaFile = join(process.cwd(), 'src/schema.gql');
   } else {
     options.typeDefs = ['dist/schema.graphql'];
   }
