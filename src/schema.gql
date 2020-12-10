@@ -1,0 +1,84 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateAccountInput {
+  email: String!
+  password: String!
+  role: userRole!
+}
+
+type CreateAccountOutput {
+  error: String
+  ok: Boolean!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input EditProfileInput {
+  email: String
+  password: String
+}
+
+type EditProfileOutput {
+  error: String
+  ok: Boolean!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginOutput {
+  error: String
+  ok: Boolean!
+  token: String
+}
+
+type Mutation {
+  createAccount(input: CreateAccountInput!): CreateAccountOutput!
+  editProfile(input: EditProfileInput!): EditProfileOutput!
+  login(input: LoginInput!): LoginOutput!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailOutput!
+}
+
+type Query {
+  hi: Boolean!
+  me: User!
+  userProfile(userId: Float!): UserProfileOutput!
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  id: Float!
+  password: String!
+  role: userRole!
+  updatedAt: DateTime!
+  verified: Boolean!
+}
+
+type UserProfileOutput {
+  error: String
+  ok: Boolean!
+  user: User
+}
+
+enum userRole {
+  CLIENT
+  DELIVERY
+  OWNER
+}
+
+input VerifyEmailInput {
+  code: String!
+}
+
+type VerifyEmailOutput {
+  error: String
+  ok: Boolean!
+}
