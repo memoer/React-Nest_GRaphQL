@@ -1,11 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import { getConnection, Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
-import { getConnection } from 'typeorm';
 import { LoginOutput } from '~/users/dtos/login.dto';
-import { User } from '~/users/entities/user.entity';
 import { UserProfileOutput } from '~/users/dtos/user-profile.dto';
+import { EditProfileOutput } from '~/users/dtos/edit-profile.dto';
+import { VerifyEmailOutput } from '~/users/dtos/verify-email';
+import { Verification } from '~/users/entities/verification.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 interface TestFn {
   (res: request.Response): void;
@@ -26,6 +29,7 @@ interface RunTestPamras<T> {
 describe('UserController (e2e)', () => {
   //* setting before test
   let app: INestApplication;
+  let verificationRepository: Repository<Verification>;
   //* common variables
   const USER = {
     ID: null,
@@ -83,6 +87,9 @@ describe('UserController (e2e)', () => {
     }).compile();
 
     app = module.createNestApplication();
+    verificationRepository = module.get<typeof verificationRepository>(
+      getRepositoryToken(Verification),
+    );
     await app.init();
   });
   afterAll(async () => {
@@ -165,8 +172,8 @@ describe('UserController (e2e)', () => {
   });
   //
   describe('userProfile', () => {
-    it('should find a profile', () => {
-      return runTest<UserProfileOutput>({
+    it('should find a profile', () =>
+      runTest<UserProfileOutput>({
         query: `query{
           userProfile(userId:${USER.ID}){
             ok
@@ -179,12 +186,8 @@ describe('UserController (e2e)', () => {
         ok: true,
         dataName: 'userProfile',
         set: USER.TOKEN,
-        otherProcess: data => {
-          console.log(data);
-          expect(data.user.id).toEqual(USER.ID);
-        },
-      });
-    });
+        otherProcess: data => expect(data.user.id).toEqual(USER.ID),
+      }));
 
     it('should not find a profile', () => {
       return runTest({
@@ -202,7 +205,55 @@ describe('UserController (e2e)', () => {
     });
   });
   //
-  it.todo('verifyEmail');
+  describe('editProfile', () => {
+    it('should change info of user', () => {
+      const changeEmail = 'test1@naver.com';
+      runTest<EditProfileOutput>({
+        query: `mutation{
+        editProfile(input:{email:"${changeEmail}"}){
+          ok
+        }
+      }`,
+        ok: true,
+        dataName: 'editProfile',
+        set: USER.TOKEN,
+        otherProcess: data => {
+          USER.EMAIL = changeEmail;
+        },
+      });
+    });
+  });
   //
-  it.todo('editProfile');
+  describe('verifyEmail', () => {
+    let verificationCode = null;
+    beforeAll(async () => {
+      const [{ code }] = await verificationRepository.find();
+      verificationCode = code;
+    });
+
+    it('should fail on wrong verification code', () =>
+      runTest<VerifyEmailOutput>({
+        query: `mutation{
+          verifyEmail(input:{code: "123"}){
+            ok,
+            error
+          }
+        }`,
+        ok: false,
+        errorMsg: 'verification not found',
+        dataName: 'verifyEmail',
+      }));
+
+    it('should success on correct veification code', () =>
+      runTest<VerifyEmailOutput>({
+        query: `mutation{
+          verifyEmail(input:{code: "${verificationCode}"}){
+            ok
+            error
+          }
+        }`,
+        ok: true,
+        dataName: 'verifyEmail',
+      }));
+  });
 });

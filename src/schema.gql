@@ -43,7 +43,7 @@ type Mutation {
   createAccount(input: CreateAccountInput!): CreateAccountOutput!
   editProfile(input: EditProfileInput!): EditProfileOutput!
   login(input: LoginInput!): LoginOutput!
-  verifyEmail: VerifyEmailOutput!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailOutput!
 }
 
 type Query {
@@ -72,6 +72,10 @@ enum userRole {
   CLIENT
   DELIVERY
   OWNER
+}
+
+input VerifyEmailInput {
+  code: String!
 }
 
 type VerifyEmailOutput {
